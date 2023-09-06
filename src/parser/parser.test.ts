@@ -1,7 +1,7 @@
 import { describe, expect, test } from "@jest/globals";
 import { Lexer } from "../lexer/lexer";
 import { Parser } from "./parser";
-import { LetStatement, ReturnStatement, Statement } from "../ast/ast";
+import { ExpressionStatement, Identifier, LetStatement, ReturnStatement, Statement } from "../ast/ast";
 
 
 
@@ -35,7 +35,7 @@ describe('test let statement', () => {
       testLetStatement(statement, expected[i].ident)
     }
    
-  })
+  });
 });
 
 
@@ -58,8 +58,34 @@ describe('test return statment',() => {
       expect(stmt).toBeInstanceOf(ReturnStatement);
       expect(stmt.tokenLiteral()).toBe("return");
     }
-  })
+  });
 
+});
+
+describe('test identifier expression', () => {
+  
+  const input = "foobar;";
+
+  const lexer = new Lexer(input);
+  const parser = new Parser(lexer);
+
+
+  test("contains an identifier", () => {
+    const program = parser.parseProgram();
+    expect(program.statements.length).toBe(1);
+    const stmt = program.statements[0];
+    expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+    if(stmt instanceof ExpressionStatement) {
+      const ident = stmt.expression;
+      
+      if (ident instanceof Identifier) {
+        
+        expect(ident.value).toBe("foobar");
+        expect(ident.tokenLiteral()).toBe("foobar");
+      }
+    } 
+  });
 });
 
 

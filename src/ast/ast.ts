@@ -23,7 +23,7 @@ export class Identifier implements Expression {
 
   
   public string() {
-    return ""
+    return `${this.value}`;
   }
   
   public tokenLiteral() {
@@ -47,8 +47,21 @@ export class LetStatement implements Statement {
   public tokenLiteral(): string | number {
     return this.token.literal;
   }
+
   public string(): string {
-      throw new Error("Method not implemented.");
+    let out = "";
+    out += this.tokenLiteral();
+    out += " ";
+    out += this.name.string();
+    out += " = ";
+
+    if (this.value !== undefined) {
+      out += this.value.string();
+    } 
+
+    out += ";";
+
+    return out;
   }
 
 }
@@ -64,14 +77,46 @@ export class ReturnStatement implements Statement {
     this.returnValue = v;
   }
   
-  tokenLiteral(): string | number {
+  public tokenLiteral(): string | number {
     return this.token.literal;
   }
 
-  string(): string {
-      throw new Error("Method not implemented.");
+  public string(): string {
+    let out = "";
+
+    out += this.tokenLiteral();
+    out += " ";
+
+    if (this.returnValue !== undefined) {
+      out += this.returnValue.string();
+    }
+
+    out += ";";
+
+    return out;
   }
   
+}
+
+export class ExpressionStatement implements Statement {
+  token: Token
+  expression?: Expression
+
+  constructor(t: Token, e?: Expression) {
+    this.token = t;
+    this.expression = e;
+  }
+  
+  public tokenLiteral(): string | number {
+    return this.token.literal;
+  }
+  
+  public string(): string {
+    if (this.expression !== undefined) {
+      return this.expression.string();
+    }
+    return "";
+  }
 }
 
 export class Program implements Node {
@@ -79,8 +124,9 @@ export class Program implements Node {
 
   
   public string(): string {
-      throw new Error("Method not implemented.");
+    return this.statements.map((s) => s.string()).join("");
   }
+  
   
   public tokenLiteral() {
     if (this.statements.length > 0) {
