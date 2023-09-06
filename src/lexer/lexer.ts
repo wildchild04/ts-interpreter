@@ -1,4 +1,3 @@
-import { privateDecrypt } from "crypto";
 import { LookupIdent, TType, Token } from "../token/token";
 
 export class Lexer {
@@ -40,71 +39,71 @@ export class Lexer {
           const ch = this.ch;
           this.readChar();
           const literal = ch+this.ch;
-          token = {Type: TType.EQ, Literal: literal}
+          token = {type: TType.EQ, literal: literal}
         } else {
-          token = {Type: TType.ASSIGN, Literal: this.ch};  
+          token = {type: TType.ASSIGN, literal: this.ch};  
         }
         break;
       case ";":
-        token = {Type : TType.SEMICOLON, Literal: this.ch};
+        token = {type : TType.SEMICOLON, literal: this.ch};
         break;
       case "(":
-        token = {Type : TType.LPAREN, Literal: this.ch};
+        token = {type : TType.LPAREN, literal: this.ch};
         break;
       case ")":
-        token = {Type : TType.RPAREN, Literal: this.ch};      
+        token = {type : TType.RPAREN, literal: this.ch};      
         break;
       case ",":
-        token = {Type : TType.COMMA, Literal: this.ch};
+        token = {type : TType.COMMA, literal: this.ch};
         break;
       case "+":
-        token = {Type : TType.PLUS, Literal: this.ch};
+        token = {type : TType.PLUS, literal: this.ch};
         break;
       case "-": 
-        token = {Type : TType.MINUS, Literal: this.ch};
+        token = {type : TType.MINUS, literal: this.ch};
         break;
       case "*":
-        token = {Type : TType.ASTERISK, Literal: this.ch};
+        token = {type : TType.ASTERISK, literal: this.ch};
         break;
       case "!":
         if(this.peekChar() === "=") {
           const ch = this.ch;
           this.readChar();
           const literal = ch+this.ch;
-          token = {Type: TType.NOT_EQ, Literal: literal};
+          token = {type: TType.NOT_EQ, literal: literal};
         } else {
-          token = {Type : TType.BANG, Literal: this.ch};
+          token = {type : TType.BANG, literal: this.ch};
         }
         break;
       case "/":
-        token = {Type : TType.SLASH, Literal: this.ch};
+        token = {type : TType.SLASH, literal: this.ch};
         break;
       case "<":
-        token = {Type: TType.LT, Literal: this.ch};
+        token = {type: TType.LT, literal: this.ch};
         break;
       case ">": 
-        token = {Type: TType.GT, Literal: this.ch};
+        token = {type: TType.GT, literal: this.ch};
         break;
       case "{":
-        token = {Type : TType.LBRACER, Literal: this.ch};
+        token = {type : TType.LBRACER, literal: this.ch};
         break;
       case "}":
-        token = {Type : TType.RBRACER, Literal: this.ch};
+        token = {type : TType.RBRACER, literal: this.ch};
         break;
       case "":       
-        token = {Type: TType.EOF, Literal: ""};
+        token = {type: TType.EOF, literal: ""};
         break;
       default: 
         if (this.isIdentifierCharacter(this.ch)) {
           
           const literal = this.readIdentifier()
-          token = {Type: LookupIdent(literal), Literal: literal}
+          token = {type: LookupIdent(literal), literal: literal}
           return token;
         } else if (this.isDigit(this.ch)) {
-          token = {Type: TType.INT, Literal: this.readNumber()};
+          token = {type: TType.INT, literal: this.readNumber()};
           return token;        
         } else {
-          token = {Type: TType.ILLEGAL, Literal: this.ch};
+          token = {type: TType.ILLEGAL, literal: this.ch};
         }
     } 
 

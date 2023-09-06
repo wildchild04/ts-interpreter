@@ -3,8 +3,8 @@ export type TokenType = string
 
 
 export type Token = {
-  Type: TokenType
-  Literal: string
+  type: TokenType
+  literal: string | number
 }
 
 

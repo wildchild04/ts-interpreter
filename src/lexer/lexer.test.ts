@@ -107,8 +107,8 @@ describe('test lexer.NextToken()', () => {
     
     for (let tt of expected) {
       let token = lexer.nextToken();
-      expect(token.Type).toBe(tt[0]);
-      expect(token.Literal).toBe(tt[1]);
+      expect(token.type).toBe(tt[0]);
+      expect(token.literal).toBe(tt[1]);
         
     }
     
