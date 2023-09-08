@@ -119,6 +119,86 @@ export class ExpressionStatement implements Statement {
   }
 }
 
+export class IntegerLiteral implements Expression {
+  
+  token: Token
+  value: number
+
+  constructor(t: Token, v: number) {
+    this.token = t;
+    this.value = v;  
+  }
+  
+  public tokenLiteral(): string | number {
+    return this.token.literal;
+  }
+
+  
+  public string(): string {
+    return `${this.token.literal}`;
+  }
+  
+}
+
+export class PrefixExpression implements Expression {
+  token: Token
+  operator: string
+  right: Expression
+
+  constructor(t: Token, o: string, r: Expression) {
+    this.token = t;
+    this.operator = o;
+    this.right = r;
+  }
+  
+  public tokenLiteral(): string | number {
+    return this.token.literal;
+  }
+  public string(): string {
+    let out = "";
+
+    out += "(";
+    out += this.operator;
+    out += this.right.string();
+    out += ")";
+
+    return out;
+  }
+    
+}
+
+export class InfixExpression implements Expression {
+
+  token: Token
+  left: Expression
+  operator: string
+  right: Expression
+
+  constructor(t: Token, l: Expression, o: string, r: Expression) {
+    this.token = t;
+    this.left = l;
+    this.operator = o;
+    this.right = r;
+  }
+  
+  public tokenLiteral(): string | number {
+    return this.token.literal;
+  }
+  
+  public string(): string {
+    let out = "";
+
+    out += "(";
+    out += this.left.string();
+    out += " " + this.operator + " ";
+    out += this.right.string();
+    out += ")";
+
+    return out;
+  }
+  
+}
+
 export class Program implements Node {
   statements: Statement[] = [];
 

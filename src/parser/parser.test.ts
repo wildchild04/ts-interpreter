@@ -1,7 +1,8 @@
 import { describe, expect, test } from "@jest/globals";
 import { Lexer } from "../lexer/lexer";
 import { Parser } from "./parser";
-import { ExpressionStatement, Identifier, LetStatement, ReturnStatement, Statement } from "../ast/ast";
+import { Expression, ExpressionStatement, Identifier, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, Program, ReturnStatement, Statement } from "../ast/ast";
+import { PrefixUnaryExpression, isPrefixUnaryExpression } from "typescript";
 
 
 
@@ -88,6 +89,152 @@ describe('test identifier expression', () => {
   });
 });
 
+describe('test integer literal expression', () => {
+  const input = "5;";
+
+  const lexer = new Lexer(input);
+  const parser = new Parser(lexer);
+
+  const program = parser.parseProgram();
+
+  test('test process integer expression', () => {
+    expect(program.statements.length).toBe(1);
+    
+    const stmt = program.statements[0];
+    
+    expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+    if (stmt instanceof ExpressionStatement) {
+      expect(stmt.expression).toBeInstanceOf(IntegerLiteral);
+      const literal = stmt.expression;
+
+      if (literal instanceof IntegerLiteral) {
+        expect(literal.value).toBe(5);
+        expect(literal?.tokenLiteral()).toBe("5");
+      }
+    }
+  });
+});
+
+describe('test parsing prefix expressions', () => {
+  
+  type PrefixTest = {
+    input: string
+    operator: string
+    integerValue: number
+  }
+
+  const tests: Array<PrefixTest> = [
+    {input: "!5;", operator: "!", integerValue: 5},
+    {input: "-15;", operator: "-", integerValue: 15},
+  ];
+
+  for (let t of tests) {
+
+    const lexer = new Lexer(t.input);
+    const parser = new Parser(lexer);
+
+    const program = parser.parseProgram();
+
+    test('prefix parsing', () => {
+      expect(program.statements.length).toBe(1);
+      const stmt = program.statements[0];
+
+      expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+      if (stmt instanceof ExpressionStatement) {
+
+        const exp = stmt.expression;
+        expect(exp).toBeInstanceOf(PrefixExpression) 
+        if (exp instanceof PrefixExpression) {
+          
+          expect(exp.operator).toBe(t.operator);
+          testIntegerLiteral(exp.right, t.integerValue);
+        }
+      }
+      
+    })
+  }
+
+});
+
+describe('test parsing infix expressions', () => {
+  type InfixTest = {
+    input: string
+    leftValue: number
+    operator: string
+    rightValue: number
+  }
+
+  const tests: Array<InfixTest> = [
+    {input: " 5 + 5;", leftValue: 5, operator: "+", rightValue: 5},
+    {input: " 5 - 5;", leftValue: 5, operator: "-", rightValue: 5},
+    {input: " 5 * 5;", leftValue: 5, operator: "*", rightValue: 5},
+    {input: " 5 / 5;", leftValue: 5, operator: "/", rightValue: 5},
+    {input: " 5 > 5;", leftValue: 5, operator: ">", rightValue: 5},
+    {input: " 5 < 5;", leftValue: 5, operator: "<", rightValue: 5},
+    {input: " 5 == 5;", leftValue: 5, operator: "==", rightValue: 5},
+    {input: " 5 != 5;", leftValue: 5, operator: "!=", rightValue: 5},
+  
+  ];
+
+  for (let t of tests) {
+    const lexer = new Lexer(t.input);
+    const parser = new Parser(lexer);
+    const program = parser.parseProgram();
+
+    test('infix parsing', () => {
+      expect(program.statements.length).toBe(1);
+      const stmt = program.statements[0];
+
+      expect(stmt).toBeInstanceOf(ExpressionStatement);
+      if (stmt instanceof ExpressionStatement) {
+        const exp = stmt.expression;
+        expect(exp).toBeInstanceOf(InfixExpression);
+
+        if (exp instanceof InfixExpression) {
+          testIntegerLiteral(exp.left, t.leftValue);
+          expect(exp.operator).toBe(t.operator);
+          testIntegerLiteral(exp.right, t.rightValue);
+        }
+      }  
+    });
+  }
+});
+
+describe('test operator precedence parsing', () => {
+
+  type TestCase = {
+    input: string
+    expected: string
+  }
+
+  const tests: Array<TestCase> = [
+    { input: "-a * b", expected: "((-a) * b)" },
+    { input: "!-a", expected: "(!(-a))", },
+    { input: "a + b + c", expected: "((a + b) + c)" },
+    { input: "a + b - c", expected: "((a + b) - c)" },
+    { input: "a * b * c", expected: "((a * b) * c)" },
+    { input: "a * b / c", expected: "((a * b) / c)" },
+    { input: "a + b / c", expected: "(a + (b / c))" },
+    { input: "a + b * c + d / e - f", expected: "(((a + (b * c)) + (d / e)) - f)" },
+    { input: "3 + 4; -5 * 5", expected: "(3 + 4)((-5) * 5)" },
+    { input: "5 > 4 == 3 < 4", expected: "((5 > 4) == (3 < 4))" },
+    { input: "5 < 4 != 3 > 4", expected: "((5 < 4) != (3 > 4))" },
+    { input: "3 + 4 * 5 == 3 * 1 + 4 * 5", expected: "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))" },
+  ];
+
+  for (let t of tests) {
+    const lexer = new Lexer(t.input);
+    const parser = new Parser(lexer);
+    const program = parser.parseProgram();
+
+    test('test precedence', () =>{
+      expect(program.string()).toBe(t.expected);
+    });
+  }
+  
+});
 
 function testLetStatement(stmt: Statement, name: string) {
   
@@ -97,6 +244,17 @@ function testLetStatement(stmt: Statement, name: string) {
   if(stmt instanceof LetStatement) {
     expect(stmt.name.value).toBe(name);
     expect(stmt.name.tokenLiteral()).toBe(name);
+  }
+}
+
+function testIntegerLiteral(exp: Expression, value: number) {
+  
+  expect(exp).toBeInstanceOf(IntegerLiteral);
+
+  if (exp instanceof IntegerLiteral) {
+    expect(exp.value).toBe(value);
+    expect(exp.tokenLiteral()).toBe(`${value}`);
+    
   }
 }
 
