@@ -199,6 +199,131 @@ export class InfixExpression implements Expression {
   
 }
 
+export class Boolean implements Expression {
+  token: Token
+  value: boolean
+
+  constructor(t: Token, v: boolean) {
+    this.token = t;
+    this.value = v;
+  }
+  
+  public tokenLiteral(): string | number {
+    return this.token.literal;
+  }
+  public string(): string {
+    return `${this.token.literal}`;
+  }
+}
+
+export class IfExpression implements Expression {
+  token: Token
+  condition: Expression
+  consequence: BlockStatement
+  alternative?: BlockStatement 
+
+  constructor(t: Token, c: Expression, con: BlockStatement, alt?: BlockStatement) {
+    this.token = t;
+    this.condition = c;
+    this.consequence = con;
+    this.alternative = alt;
+  }
+  
+  public tokenLiteral(): string | number {
+    return this.token.literal;
+  }
+  
+  public string(): string {
+    let out = "";
+
+    out += "if";
+    out += this.condition.string();
+    out += " ";
+    out += this.consequence.string();
+
+    if (this.alternative !== undefined) {
+      out += "else ";
+      out += this.alternative.string();
+    }
+
+    return out;
+  }
+
+  
+}
+
+export class BlockStatement implements Statement {
+  token: Token
+  statements: Array<Statement>
+
+  constructor(t: Token, s: Array<Statement>) {
+    this.token = t;
+    this.statements = s;
+  }
+  
+  public tokenLiteral(): string | number {
+    return this.token.literal;
+  }
+  
+  public string(): string {
+    return this.statements.map( (s) => s.string()).join("");
+  }
+}
+
+export class FunctionLiteral implements Expression {
+  token: Token
+  parameters: Array<Identifier>
+  body: BlockStatement
+
+  constructor(t: Token, p: Array<Identifier>, b: BlockStatement) {
+    this.token = t;
+    this.parameters = p;
+    this.body = b;
+  }
+  
+  public tokenLiteral(): string | number {
+    return this.token.literal;
+  }
+
+  public string(): string {
+    let out = `${this.tokenLiteral()}`;
+    out += "(";
+    out += this.parameters.map((p) => p.string()).join(", ");
+    out += ") ";
+    out += this.body.string();
+    return out;
+  }
+
+  
+}
+
+export class CallExpression implements Expression {
+  token: Token
+  function: Expression
+  arguments: Array<Expression>
+
+  constructor(t: Token, f: Expression, a: Array<Expression>) {
+    this.token = t;
+    this.function = f;
+    this.arguments = a;
+  }
+  
+  public tokenLiteral(): string | number {
+    return this.token.literal;
+  }
+  
+  public string(): string {
+    let out = "";
+    out += this.function.string();
+    out += "(";
+    out += this.arguments.map((s) => s.string()).join(",");
+    out += ")";
+    return out;
+  }
+
+  
+}
+
 export class Program implements Node {
   statements: Statement[] = [];
 
