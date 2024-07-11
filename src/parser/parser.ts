@@ -1,4 +1,6 @@
-import { Expression, ExpressionStatement, Identifier, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, Program, ReturnStatement, Statement, Boolean, BlockStatement, IfExpression, FunctionLiteral, CallExpression } from "../ast/ast";
+import { throws } from "assert";
+import { Expression, ExpressionStatement, Identifier, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, Program, ReturnStatement, Statement, BooleanLiteral, BlockStatement, IfExpression, FunctionLiteral, CallExpression, StringLiteral, ArrayLiteral, IndexExpression, HashLiteral } from "../ast/ast";
+import { NULL } from "../evaluator/evaluator";
 import { Lexer } from "../lexer/lexer";
 import { TType, Token, TokenType } from "../token/token";
 
@@ -13,6 +15,7 @@ enum PRE {
   PRODUCT,
   PREFIX,
   CALL,
+  INDEX,
 }
 
 const precedences: ReadonlyMap<TokenType, number> = new Map([
@@ -25,6 +28,7 @@ const precedences: ReadonlyMap<TokenType, number> = new Map([
   [TType.SLASH, PRE.PRODUCT],
   [TType.ASTERISK, PRE.PRODUCT],
   [TType.LPAREN, PRE.CALL],
+  [TType.LBRACKET, PRE.INDEX],
 ]);
 
 export class Parser {
@@ -50,6 +54,9 @@ export class Parser {
     this.registerPrefix(TType.LPAREN, this.parseGroupExpression);
     this.registerPrefix(TType.IF, this.parseIfExpression);
     this.registerPrefix(TType.FUNCTION, this.parseFunctionLiteral);
+    this.registerPrefix(TType.STRING, this.parseStringLiteral);
+    this.registerPrefix(TType.LBRACKET, this.parseArrayLiteral);
+    this.registerPrefix(TType.LBRACER, this.parseHashLiteral);
 
     this.registerInfix(TType.PLUS, this.parseInfixExpression);
     this.registerInfix(TType.MINUS, this.parseInfixExpression);
@@ -60,6 +67,7 @@ export class Parser {
     this.registerInfix(TType.LT, this.parseInfixExpression);
     this.registerInfix(TType.GT, this.parseInfixExpression);
     this.registerInfix(TType.LPAREN, this.parseCallExpression);
+    this.registerInfix(TType.LBRACKET, this.parseIndexExpression);
 
   }
 
@@ -107,9 +115,6 @@ export class Parser {
       throw new Error(`${NEXT_TOKEN_ERR} '${TType.ASSIGN}'`);
     }
 
-    // while (!this.curTokenIs(TType.SEMICOLON)) {
-    //   this.parseNextToken();
-    // }
     this.parseNextToken();
     let valueToken = this.parseExpression(PRE.LOWEST);
 
@@ -231,7 +236,7 @@ export class Parser {
   }
 
   private parseBoolean(t: Token, p: Parser): Expression {
-    return new Boolean(t, p.curTokenIs(TType.TRUE));
+    return new BooleanLiteral(t, p.curTokenIs(TType.TRUE));
   }
 
   private parseGroupExpression(t: Token, p: Parser): Expression | null {
@@ -339,7 +344,8 @@ export class Parser {
   }
 
   private parseCallExpression(t: Token, p: Parser, fn: Expression): Expression {
-    return new CallExpression(t, fn, p.parseCallArguments(p));
+    const args = p.parseExpressionList(TType.RPAREN);
+    return new CallExpression(t, fn, args);
   }
 
   private parseCallArguments(p: Parser): Array<Expression> {
@@ -364,5 +370,80 @@ export class Parser {
     }
 
     return args;
+  }
+
+  private parseStringLiteral(t: Token): Expression {
+    return new StringLiteral(t, `${t.literal}`);
+  }
+
+  private parseArrayLiteral(t: Token, p: Parser): Expression {
+    const elements = p.parseExpressionList(TType.RBRACKET);
+    return new ArrayLiteral(t, elements);
+
+  }
+
+  private parseExpressionList(end: TType): Expression[] {
+    const list: Expression[] = [];
+
+    if (this.peekTokenIs(end)) {
+      this.parseNextToken();
+      return list;
+    }
+
+    this.parseNextToken();
+
+    list.push(this.parseExpression(PRE.LOWEST));
+
+    while (this.peekTokenIs(TType.COMMA)) {
+      this.parseNextToken();
+      this.parseNextToken();
+      list.push(this.parseExpression(PRE.LOWEST));
+    }
+
+    if (!this.expectPeek(end)) {
+      return [];
+    }
+
+    return list;
+  }
+
+  private parseIndexExpression(t: Token, p: Parser, left: Expression): Expression {
+
+    p.parseNextToken();
+    const index = p.parseExpression(PRE.LOWEST);
+
+    if (!p.expectPeek(TType.RBRACKET)) {
+      throw new Error(`Unexpected tokne, want ${TType.RBRACKET}, got=${p.peekToken}`)
+    }
+
+    return new IndexExpression(t, left, index)
+  }
+
+  private parseHashLiteral(t: Token, p: Parser): Expression {
+    const pair: Map<Expression, Expression> = new Map();
+    while (!p.peekTokenIs(TType.RBRACER)) {
+      p.parseNextToken();
+
+      const key = p.parseExpression(PRE.LOWEST);
+
+      if (!p.expectPeek(TType.COLON)) {
+        throw new Error(`Expected ${TType.COLON}`);
+      }
+
+      p.parseNextToken()
+      const value = p.parseExpression(PRE.LOWEST)
+
+      pair.set(key, value);
+
+      if (!p.peekTokenIs(TType.RBRACER) && !p.expectPeek(TType.COMMA)) {
+        throw new Error(`Expected ${TType.RBRACER}`);
+      }
+    }
+
+    if (!p.expectPeek(TType.RBRACER)) {
+      throw new Error(`expected ${TType.RBRACER}, got ${p.peekToken.literal}`)
+    }
+
+    return new HashLiteral(t, pair);
   }
 }

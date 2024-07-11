@@ -14,12 +14,12 @@ export enum TType {
   IDENT = "IDENT",
   INT = "INT",
   ASSIGN = "=",
-  PLUS  = "+",
+  PLUS = "+",
   MINUS = "-",
   BANG = "!",
   ASTERISK = "*",
   SLASH = "/",
-  COMMA = ",", 
+  COMMA = ",",
   SEMICOLON = ";",
   LT = "<",
   GT = ">",
@@ -36,6 +36,10 @@ export enum TType {
   RETURN = "RETURN",
   EQ = "==",
   NOT_EQ = "!=",
+  STRING = "STRING",
+  LBRACKET = "[",
+  RBRACKET = ']',
+  COLON = ':',
 }
 
 
@@ -50,11 +54,11 @@ const keyword: ReadonlyMap<string, TokenType> = new Map([
 ]);
 
 
-export const LookupIdent = (ident: string): TokenType =>  {
+export const LookupIdent = (ident: string): TokenType => {
   const token = keyword.get(ident);
   if (token != undefined) {
     return token;
-  } 
+  }
   return TType.IDENT;
 }
 

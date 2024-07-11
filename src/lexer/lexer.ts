@@ -19,102 +19,127 @@ export class Lexer {
     if (this.readPosition >= this.input.length) {
       this.ch = ""
     } else {
-      this.ch = this.input.charAt(this.readPosition);      
+      this.ch = this.input.charAt(this.readPosition);
     }
 
     this.position = this.readPosition;
     this.readPosition++;
   }
 
-  
+
   public nextToken(): Token {
 
     let token: Token;
 
     this.skipWhitespace();
-    
+
     switch (this.ch) {
       case "=":
         if (this.peekChar() === "=") {
           const ch = this.ch;
           this.readChar();
-          const literal = ch+this.ch;
-          token = {type: TType.EQ, literal: literal}
+          const literal = ch + this.ch;
+          token = { type: TType.EQ, literal: literal }
         } else {
-          token = {type: TType.ASSIGN, literal: this.ch};  
+          token = { type: TType.ASSIGN, literal: this.ch };
         }
         break;
       case ";":
-        token = {type : TType.SEMICOLON, literal: this.ch};
+        token = { type: TType.SEMICOLON, literal: this.ch };
         break;
       case "(":
-        token = {type : TType.LPAREN, literal: this.ch};
+        token = { type: TType.LPAREN, literal: this.ch };
         break;
       case ")":
-        token = {type : TType.RPAREN, literal: this.ch};      
+        token = { type: TType.RPAREN, literal: this.ch };
         break;
       case ",":
-        token = {type : TType.COMMA, literal: this.ch};
+        token = { type: TType.COMMA, literal: this.ch };
         break;
       case "+":
-        token = {type : TType.PLUS, literal: this.ch};
+        token = { type: TType.PLUS, literal: this.ch };
         break;
-      case "-": 
-        token = {type : TType.MINUS, literal: this.ch};
+      case "-":
+        token = { type: TType.MINUS, literal: this.ch };
         break;
       case "*":
-        token = {type : TType.ASTERISK, literal: this.ch};
+        token = { type: TType.ASTERISK, literal: this.ch };
         break;
       case "!":
-        if(this.peekChar() === "=") {
+        if (this.peekChar() === "=") {
           const ch = this.ch;
           this.readChar();
-          const literal = ch+this.ch;
-          token = {type: TType.NOT_EQ, literal: literal};
+          const literal = ch + this.ch;
+          token = { type: TType.NOT_EQ, literal: literal };
         } else {
-          token = {type : TType.BANG, literal: this.ch};
+          token = { type: TType.BANG, literal: this.ch };
         }
         break;
       case "/":
-        token = {type : TType.SLASH, literal: this.ch};
+        token = { type: TType.SLASH, literal: this.ch };
         break;
       case "<":
-        token = {type: TType.LT, literal: this.ch};
+        token = { type: TType.LT, literal: this.ch };
         break;
-      case ">": 
-        token = {type: TType.GT, literal: this.ch};
+      case ">":
+        token = { type: TType.GT, literal: this.ch };
         break;
       case "{":
-        token = {type : TType.LBRACER, literal: this.ch};
+        token = { type: TType.LBRACER, literal: this.ch };
         break;
       case "}":
-        token = {type : TType.RBRACER, literal: this.ch};
+        token = { type: TType.RBRACER, literal: this.ch };
         break;
-      case "":       
-        token = {type: TType.EOF, literal: ""};
+      case "":
+        token = { type: TType.EOF, literal: "" };
         break;
-      default: 
+      case '"':
+        token = { type: TType.STRING, literal: this.readString() }
+        break;
+      case '[':
+        token = { type: TType.LBRACKET, literal: this.ch };
+        break;
+      case ']':
+        token = { type: TType.RBRACKET, literal: this.ch };
+        break;
+      case ':':
+        token = { type: TType.COLON, literal: this.ch };
+        break;
+      default:
         if (this.isIdentifierCharacter(this.ch)) {
-          
+
           const literal = this.readIdentifier()
-          token = {type: LookupIdent(literal), literal: literal}
+          token = { type: LookupIdent(literal), literal: literal }
           return token;
         } else if (this.isDigit(this.ch)) {
-          token = {type: TType.INT, literal: this.readNumber()};
-          return token;        
+          token = { type: TType.INT, literal: this.readNumber() };
+          return token;
         } else {
-          token = {type: TType.ILLEGAL, literal: this.ch};
+          token = { type: TType.ILLEGAL, literal: this.ch };
         }
-    } 
+    }
 
     this.readChar();
     return token;
   }
 
+  private readString(): string {
+    const position = this.position + 1;
+
+    while (true) {
+      this.readChar();
+      if (this.ch == '"' || this.ch.length == 0) {
+        break;
+      }
+    }
+
+    return this.input.substring(position, this.position);
+  }
+
   private readIdentifier(): string {
     const pos = this.position;
 
-    while(this.isIdentifierCharacter(this.ch)) {
+    while (this.isIdentifierCharacter(this.ch)) {
       this.readChar();
     }
 
@@ -124,7 +149,7 @@ export class Lexer {
   private readNumber(): string {
     const pos = this.position;
 
-    while(this.isDigit(this.ch)) {
+    while (this.isDigit(this.ch)) {
       this.readChar();
     }
 
@@ -148,9 +173,9 @@ export class Lexer {
   }
 
   private skipWhitespace() {
-    while(/\s/.test(this.ch)) {
+    while (/\s/.test(this.ch)) {
       this.readChar();
     }
   }
-  
+
 }

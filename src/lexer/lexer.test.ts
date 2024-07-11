@@ -21,41 +21,45 @@ describe('test lexer.NextToken()', () => {
 
     10 == 10;
     10 != 9;
-  
+
+    "foobar"
+    "foo bar"
+    [1, 2];
+    {"foo": "bar"}
   `
 
   let expected = [
-    
-    [TType.LET, "let"], 
-    [TType.IDENT, "five"], 
+
+    [TType.LET, "let"],
+    [TType.IDENT, "five"],
     [TType.ASSIGN, "="],
     [TType.INT, "5"],
     [TType.SEMICOLON, ";"],
-    [TType.LET, "let"], 
-    [TType.IDENT, "ten"], 
+    [TType.LET, "let"],
+    [TType.IDENT, "ten"],
     [TType.ASSIGN, "="],
     [TType.INT, "10"],
     [TType.SEMICOLON, ";"],
-    [TType.LET, "let"], 
-    [TType.IDENT, "add"], 
+    [TType.LET, "let"],
+    [TType.IDENT, "add"],
     [TType.ASSIGN, "="],
     [TType.FUNCTION, "fn"],
     [TType.LPAREN, "("],
-    [TType.IDENT, "x"], 
-    [TType.COMMA, ","], 
+    [TType.IDENT, "x"],
+    [TType.COMMA, ","],
     [TType.IDENT, "y"],
     [TType.RPAREN, ")"],
     [TType.LBRACER, "{"],
     [TType.IDENT, "x"],
     [TType.PLUS, "+"],
     [TType.IDENT, "y"],
-    [TType.SEMICOLON, ";"], 
-    [TType.RBRACER, "}"], 
+    [TType.SEMICOLON, ";"],
+    [TType.RBRACER, "}"],
     [TType.SEMICOLON, ";"],
     [TType.LET, "let"],
     [TType.IDENT, "result"],
-    [TType.ASSIGN, "="], 
-    [TType.IDENT, "add"], 
+    [TType.ASSIGN, "="],
+    [TType.IDENT, "add"],
     [TType.LPAREN, "("],
     [TType.IDENT, "five"],
     [TType.COMMA, ","],
@@ -99,18 +103,31 @@ describe('test lexer.NextToken()', () => {
     [TType.NOT_EQ, "!="],
     [TType.INT, "9"],
     [TType.SEMICOLON, ";"],
+    [TType.STRING, "foobar"],
+    [TType.STRING, "foo bar"],
+    [TType.LBRACKET, "["],
+    [TType.INT, "1"],
+    [TType.COMMA, ","],
+    [TType.INT, "2"],
+    [TType.RBRACKET, "]"],
+    [TType.SEMICOLON, ";"],
+    [TType.LBRACER, "{"],
+    [TType.STRING, "foo"],
+    [TType.COLON, ":"],
+    [TType.STRING, "bar"],
+    [TType.RBRACER, "}"],
     [TType.EOF, ""],
   ];
 
   test(`test lexer with input: ${input}`, () => {
-    const lexer = new Lexer(input); 
-    
+    const lexer = new Lexer(input);
+
     for (let tt of expected) {
       let token = lexer.nextToken();
       expect(token.type).toBe(tt[0]);
       expect(token.literal).toBe(tt[1]);
-        
+
     }
-    
+
   })
 })

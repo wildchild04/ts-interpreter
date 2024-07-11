@@ -1,14 +1,14 @@
 import { Token } from "../token/token";
 
 
-interface Node {
+export interface Node {
   tokenLiteral(): string | number;
   string(): string;
 }
 
-export interface Statement extends Node {}
+export interface Statement extends Node { }
 
-export interface Expression extends Node {}
+export interface Expression extends Node { }
 
 
 export class Identifier implements Expression {
@@ -16,34 +16,34 @@ export class Identifier implements Expression {
   token: Token;
   value: string | number;
 
-  constructor(t: Token, v: string|number) {
+  constructor(t: Token, v: string | number) {
     this.token = t;
-    this.value = v; 
+    this.value = v;
   }
 
-  
+
   public string() {
     return `${this.value}`;
   }
-  
+
   public tokenLiteral() {
     return this.token.literal;
   }
-  
+
 }
 
 export class LetStatement implements Statement {
   token: Token;
-  name: Identifier 
-  value?: Identifier | Expression
+  name: Identifier
+  value: Identifier | Expression
 
-  constructor(t: Token, n: Identifier, v?: Identifier | Expression) {
+  constructor(t: Token, n: Identifier, v: Identifier | Expression) {
     this.token = t;
-    this.name = n; 
+    this.name = n;
     this.value = v;
   }
 
-    
+
   public tokenLiteral(): string | number {
     return this.token.literal;
   }
@@ -57,7 +57,7 @@ export class LetStatement implements Statement {
 
     if (this.value !== undefined) {
       out += this.value.string();
-    } 
+    }
 
     out += ";";
 
@@ -69,14 +69,14 @@ export class LetStatement implements Statement {
 export class ReturnStatement implements Statement {
 
   token: Token
-  returnValue?: Expression 
+  returnValue?: Expression
 
 
   constructor(t: Token, v?: Expression) {
     this.token = t;
     this.returnValue = v;
   }
-  
+
   public tokenLiteral(): string | number {
     return this.token.literal;
   }
@@ -95,7 +95,7 @@ export class ReturnStatement implements Statement {
 
     return out;
   }
-  
+
 }
 
 export class ExpressionStatement implements Statement {
@@ -106,11 +106,11 @@ export class ExpressionStatement implements Statement {
     this.token = t;
     this.expression = e;
   }
-  
+
   public tokenLiteral(): string | number {
     return this.token.literal;
   }
-  
+
   public string(): string {
     if (this.expression !== undefined) {
       return this.expression.string();
@@ -120,24 +120,24 @@ export class ExpressionStatement implements Statement {
 }
 
 export class IntegerLiteral implements Expression {
-  
+
   token: Token
   value: number
 
   constructor(t: Token, v: number) {
     this.token = t;
-    this.value = v;  
+    this.value = v;
   }
-  
+
   public tokenLiteral(): string | number {
     return this.token.literal;
   }
 
-  
+
   public string(): string {
     return `${this.token.literal}`;
   }
-  
+
 }
 
 export class PrefixExpression implements Expression {
@@ -150,7 +150,7 @@ export class PrefixExpression implements Expression {
     this.operator = o;
     this.right = r;
   }
-  
+
   public tokenLiteral(): string | number {
     return this.token.literal;
   }
@@ -164,7 +164,7 @@ export class PrefixExpression implements Expression {
 
     return out;
   }
-    
+
 }
 
 export class InfixExpression implements Expression {
@@ -180,11 +180,11 @@ export class InfixExpression implements Expression {
     this.operator = o;
     this.right = r;
   }
-  
+
   public tokenLiteral(): string | number {
     return this.token.literal;
   }
-  
+
   public string(): string {
     let out = "";
 
@@ -196,10 +196,10 @@ export class InfixExpression implements Expression {
 
     return out;
   }
-  
+
 }
 
-export class Boolean implements Expression {
+export class BooleanLiteral implements Expression {
   token: Token
   value: boolean
 
@@ -207,7 +207,7 @@ export class Boolean implements Expression {
     this.token = t;
     this.value = v;
   }
-  
+
   public tokenLiteral(): string | number {
     return this.token.literal;
   }
@@ -220,7 +220,7 @@ export class IfExpression implements Expression {
   token: Token
   condition: Expression
   consequence: BlockStatement
-  alternative?: BlockStatement 
+  alternative?: BlockStatement
 
   constructor(t: Token, c: Expression, con: BlockStatement, alt?: BlockStatement) {
     this.token = t;
@@ -228,11 +228,11 @@ export class IfExpression implements Expression {
     this.consequence = con;
     this.alternative = alt;
   }
-  
+
   public tokenLiteral(): string | number {
     return this.token.literal;
   }
-  
+
   public string(): string {
     let out = "";
 
@@ -249,7 +249,7 @@ export class IfExpression implements Expression {
     return out;
   }
 
-  
+
 }
 
 export class BlockStatement implements Statement {
@@ -260,13 +260,13 @@ export class BlockStatement implements Statement {
     this.token = t;
     this.statements = s;
   }
-  
+
   public tokenLiteral(): string | number {
     return this.token.literal;
   }
-  
+
   public string(): string {
-    return this.statements.map( (s) => s.string()).join("");
+    return this.statements.map((s) => s.string()).join("");
   }
 }
 
@@ -280,7 +280,7 @@ export class FunctionLiteral implements Expression {
     this.parameters = p;
     this.body = b;
   }
-  
+
   public tokenLiteral(): string | number {
     return this.token.literal;
   }
@@ -294,7 +294,7 @@ export class FunctionLiteral implements Expression {
     return out;
   }
 
-  
+
 }
 
 export class CallExpression implements Expression {
@@ -307,11 +307,11 @@ export class CallExpression implements Expression {
     this.function = f;
     this.arguments = a;
   }
-  
+
   public tokenLiteral(): string | number {
     return this.token.literal;
   }
-  
+
   public string(): string {
     let out = "";
     out += this.function.string();
@@ -321,18 +321,120 @@ export class CallExpression implements Expression {
     return out;
   }
 
-  
+
+}
+
+export class StringLiteral implements Expression {
+  token: Token
+  value: string
+
+  constructor(t: Token, v: string) {
+    this.token = t;
+    this.value = v;
+  }
+  tokenLiteral(): string | number {
+    return this.token.literal;
+  }
+  string(): string {
+    return `${this.token.literal}`;
+  }
+}
+
+export class ArrayLiteral implements Expression {
+  token: Token
+  elements: Expression[]
+  constructor(t: Token, e: Expression[]) {
+
+    this.token = t;
+    this.elements = e;
+  }
+  tokenLiteral(): string | number {
+    return this.token.literal;
+  }
+  string(): string {
+    let out = '';
+
+    out += '[';
+    out += this.elements.map((e) => e.string()).join(', ');
+    out += ']';
+
+    return out;
+  }
+
+}
+
+export class IndexExpression implements Expression {
+  token: Token;
+  left: Expression;
+  index: Expression;
+
+  constructor(t: Token, l: Expression, i: Expression) {
+    this.token = t;
+    this.left = l;
+    this.index = i;
+  }
+  tokenLiteral(): string | number {
+
+    return this.token.literal;
+  }
+  string(): string {
+
+    let out = '';
+
+    out += '(';
+    out += this.left.string();
+    out += '[';
+    out += this.index.string();
+    out += ']';
+    out += ')';
+
+    return out;
+  }
+
+}
+export class HashLiteral implements Expression {
+  token: Token
+  pairs: Map<Expression, Expression>
+  constructor(t: Token, m?: Map<Expression, Expression>) {
+
+    this.token = t;
+
+    if (m) {
+      this.pairs = m;
+    } else {
+      this.pairs = new Map();
+    }
+  }
+
+  tokenLiteral(): string | number {
+    return this.token.literal;
+  }
+
+  string(): string {
+    let out = '';
+    const entries = this.pairs.entries();
+    out += '{'
+    let entry = entries.next();
+    while (!entry.done) {
+      out += `${entry.value[0].string()}:${entry.value[1].string()}, `
+    }
+
+    out += '}';
+
+    return out;
+  }
+
 }
 
 export class Program implements Node {
   statements: Statement[] = [];
 
-  
+
   public string(): string {
     return this.statements.map((s) => s.string()).join("");
   }
-  
-  
+
+
   public tokenLiteral() {
     if (this.statements.length > 0) {
       return this.statements[0].tokenLiteral();
@@ -340,5 +442,5 @@ export class Program implements Node {
       return "";
     }
   }
-  
-} 
+
+}

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "@jest/globals";
 import { Lexer } from "../lexer/lexer";
 import { Parser } from "./parser";
-import { BlockStatement, Boolean, CallExpression, Expression, ExpressionStatement, FunctionLiteral, Identifier, IfExpression, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, ReturnStatement, Statement } from "../ast/ast";
+import { ArrayLiteral, BlockStatement, BooleanLiteral, CallExpression, Expression, ExpressionStatement, FunctionLiteral, HashLiteral, Identifier, IfExpression, IndexExpression, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, ReturnStatement, Statement, StringLiteral } from "../ast/ast";
 
 
 
@@ -235,7 +235,8 @@ describe('test operator precedence parsing', () => {
     { input: "!(true == true)", expected: "(!(true == true))" },
     { input: "a + add(b * c) + d", expected: "((a + add((b * c))) + d)" },
     { input: "add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))", expected: "add(a,b,1,(2 * 3),(4 + 5),add(6,(7 * 8)))" },
-
+    { input: "a * [1, 2, 3, 4][b * c] * d", expected: "((a * ([1, 2, 3, 4][(b * c)])) * d)" },
+    { input: "add(a * b[2], b[1], 2 * [1, 2][1])", expected: "add((a * (b[2])),(b[1]),(2 * ([1, 2][1])))" },
   ];
 
   for (let t of tests) {
@@ -389,6 +390,107 @@ describe('test call expression parsing', () => {
   });
 });
 
+describe('parser test', () => {
+
+
+  test('test string literal expression', () => {
+    const input = '"Hello world";';
+    const lexer = new Lexer(input);
+    const parser = new Parser(lexer);
+    const program = parser.parseProgram();
+
+    expect(program.statements[0]).toBeInstanceOf(ExpressionStatement);
+    const stmt = program.statements[0];
+    if (stmt instanceof ExpressionStatement) {
+
+      const literal = stmt.expression;
+      expect(literal).toBeInstanceOf(StringLiteral);
+      if (literal instanceof StringLiteral) {
+        expect(literal.value).toBe('Hello world');
+      }
+    }
+  });
+
+  test('test parsing array', () => {
+    const input = '[1,2*2,3+3]';
+    const lexer = new Lexer(input);
+    const parser = new Parser(lexer);
+    const program = parser.parseProgram();
+
+    const stmt = program.statements[0];
+    expect(stmt).toBeInstanceOf(ExpressionStatement);
+    if (stmt instanceof ExpressionStatement) {
+      const array = stmt.expression;
+      expect(array).toBeInstanceOf(ArrayLiteral);
+      if (array instanceof ArrayLiteral) {
+        expect(array.elements.length).toBe(3);
+        testIntegerLiteral(array.elements[0], 1);
+        testInfixExpression(array.elements[1], 2, '*', 2);
+        testInfixExpression(array.elements[2], 3, '+', 3);
+
+      }
+    }
+  });
+
+  test('test parsing index expression', () => {
+    const input = 'myArray[1+1]';
+    const lexer = new Lexer(input);
+    const parser = new Parser(lexer);
+    const program = parser.parseProgram();
+
+    const stmt = program.statements[0];
+
+    expect(stmt).toBeInstanceOf(ExpressionStatement);
+    if (stmt instanceof ExpressionStatement) {
+      const indexExp = stmt.expression;
+
+      expect(indexExp).toBeInstanceOf(IndexExpression);
+
+      if (indexExp instanceof IndexExpression) {
+        testIdentifier(indexExp.left, 'myArray');
+        testInfixExpression(indexExp.index, 1, '+', 1);
+
+      }
+    }
+  });
+
+  test('test parsing hash literals string keys', () => {
+    const input = `{"one": 1, "two": 2, "three": 3}`
+
+    const lexer = new Lexer(input);
+    const parser = new Parser(lexer);
+    const program = parser.parseProgram();
+
+    const stmt = program.statements[0]
+
+    expect(stmt).toBeInstanceOf(ExpressionStatement);
+    if (stmt instanceof ExpressionStatement) {
+      const hash = stmt.expression;
+      expect(hash).toBeInstanceOf(HashLiteral)
+      if (hash instanceof HashLiteral) {
+
+        expect(hash.pairs.size).toBe(3);
+        const expectMap: Map<string, number> = new Map([
+          ['one', 1],
+          ['two', 2],
+          ['three', 3]
+        ]);
+
+        const entries = hash.pairs.entries();
+        let entry = entries.next();
+        while (!entry.done) {
+          const key = entry.value[0];
+
+          expect(expectMap.get(key.string())).toBeTruthy
+          entry = entries.next();
+        }
+      }
+    }
+
+  })
+
+})
+
 function testLetStatement(stmt: Statement, name: string) {
 
   expect(stmt.tokenLiteral()).toBe("let");
@@ -444,9 +546,9 @@ function testInfixExpression(exp: Expression, left: any, operator: string, right
 }
 
 function testBooleanLiteral(exp: Expression, value: boolean) {
-  expect(exp).toBeInstanceOf(Boolean);
+  expect(exp).toBeInstanceOf(BooleanLiteral);
 
-  if (exp instanceof Boolean) {
+  if (exp instanceof BooleanLiteral) {
     expect(exp.value).toBe(value);
     expect(exp.tokenLiteral()).toBe(`${value}`);
   }
